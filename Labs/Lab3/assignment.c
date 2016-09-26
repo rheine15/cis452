@@ -27,10 +27,7 @@ int main()
     
     printf("waiting...\t");
     fflush(stdout);
-    pause();
-    //TODO: why is this not returning? http://stackoverflow.com/questions/16041754/how-to-use-sigsuspend
-    printf("unpaused!\n");
-    
+    pause();   
   } else if(pid == 0) { //I am a child
     //stay alive to send signals
     int rTime,rSig;
