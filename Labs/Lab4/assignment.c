@@ -40,13 +40,20 @@ int main()
   
   while(1){
     //setup variables for each worker thread
-    char file_name[WORDSIZE];
+    char buffer[WORDSIZE];
+    char* file_name;
     pthread_t worker;
        
     //get file name from user
-    fgets(file_name, WORDSIZE, stdin);
+    fgets(buffer, WORDSIZE, stdin);
     //chop off newline character
-    file_name[strlen(file_name)-1]='\0';
+    buffer[strlen(buffer)-1]='\0';
+    
+    //allocate new memory	
+    file_name = malloc(strlen(buffer));
+    //copy into new memory space from the buffer
+    strcpy(file_name, buffer);    
+
     //increment request count
     file_request_count++;
     
@@ -69,11 +76,8 @@ int main()
 
 void* find_file (void* arg)
 {
-  //TODO: race condition if file_name is changed by a second 
-  //TODO: request before first copy is completed
-  // casting to string and copying to local variable
-  char file_request[WORDSIZE];
-  strcpy(file_request,(char*) arg);
+  // casting to string
+  char *file_request = (char*) arg;
   
   // print out the file name requested
   printf ("-Worker retreiving '%s'\n", file_request);
@@ -82,12 +86,10 @@ void* find_file (void* arg)
   r = rand()%5; //random number between 0 and 44
   if(r){ //80% chance of being 1 thru 4
    sleep(1);
-   //fflush(stdin);
    printf ("-File '%s' found in cache\n", file_request);
   } else { //20% chance of being 0
     t = (rand()%4) + 7; //random number between 7 and 10
     sleep(t);
-    //TODO: Do we need to block or is this simulating it???
     printf ("-File '%s' found in hard drive after %d seconds\n", file_request, t);
   }
   
@@ -101,7 +103,7 @@ void* find_file (void* arg)
   }
   pthread_mutex_unlock(&lock);
   
-  //TODO: Is pthread_exit or return(NULL) better???
+  free(file_request);
   pthread_exit(NULL);
 }
 
