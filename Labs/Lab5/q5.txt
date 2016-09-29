@@ -1,0 +1,75 @@
+Script started on Thu 29 Sep 2016 02:09:25 PM EDT
+[?1034h[eos16:~/CIS452/Labs/Lab5]$ ./a.outls[Kcd Lab4ls[Kcd Labsls[Kcd CIS452/ls[Kmysql -p -h cis.gvsu.edu/~teitsmch[Kchmod -R o+r ~/public_html[2Pmysql -p -h cis.gvsu.edu/~teitsmch[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls[Kcd CIS452/ls[Kcd Labsls[Kcd Lab4ls[K./a.out[Kgcc -Wall sample1.c
+[eos16:~/CIS452/Labs/Lab5]$ ./a.out
+shmId: 142049299
+Shared memory size: 4096 bytes
+value a: 140666616664064	 value b: 140666616668160
+^C
+[eos16:~/CIS452/Labs/Lab5]$ ipcs
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status      
+0x00000000 120913920  teitsmch   600        393216     2          dest         
+0x00000000 121012225  teitsmch   600        524288     2          dest         
+0x00000000 121110530  teitsmch   600        393216     2          dest         
+0x00000000 121208835  teitsmch   600        393216     2          dest         
+0x00000000 121307140  teitsmch   600        393216     2          dest         
+0x00000000 127041541  teitsmch   600        393216     2          dest         
+0x00000000 121503750  teitsmch   600        393216     2          dest         
+0x00000000 121733127  teitsmch   600        524288     2          dest         
+0x00000000 121831432  teitsmch   600        524288     2          dest         
+0x00000000 121864201  teitsmch   600        4194304    2          dest         
+0x00000000 121995274  teitsmch   600        524288     2          dest         
+0x00000000 122028043  teitsmch   600        393216     2          dest         
+0x00000000 124485644  teitsmch   600        393216     2          dest         
+0x00000000 124518413  teitsmch   600        524288     2          dest         
+0x00000000 128385038  teitsmch   600        524288     2          dest         
+0x00000000 127467535  teitsmch   700        3017196    2          dest         
+0x00000000 125370384  teitsmch   600        524288     2          dest         
+0x00000000 128417809  teitsmch   600        524288     2          dest         
+0x00000000 128450578  teitsmch   600        393216     2          dest         
+0x00000000 142049299  teitsmch   600        4096       0                       
+0x00000000 140738580  teitsmch   700        136300     2          dest         
+
+------ Semaphore Arrays --------
+key        semid      owner      perms      nsems     
+
+[eos16:~/CIS452/Labs/Lab5]$ ipcrm shm 142049299
+resource(s) deleted
+[eos16:~/CIS452/Labs/Lab5]$ ipcs
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status      
+0x00000000 120913920  teitsmch   600        393216     2          dest         
+0x00000000 121012225  teitsmch   600        524288     2          dest         
+0x00000000 121110530  teitsmch   600        393216     2          dest         
+0x00000000 121208835  teitsmch   600        393216     2          dest         
+0x00000000 121307140  teitsmch   600        393216     2          dest         
+0x00000000 127041541  teitsmch   600        393216     2          dest         
+0x00000000 121503750  teitsmch   600        393216     2          dest         
+0x00000000 121733127  teitsmch   600        524288     2          dest         
+0x00000000 121831432  teitsmch   600        524288     2          dest         
+0x00000000 121864201  teitsmch   600        4194304    2          dest         
+0x00000000 121995274  teitsmch   600        524288     2          dest         
+0x00000000 122028043  teitsmch   600        393216     2          dest         
+0x00000000 124485644  teitsmch   600        393216     2          dest         
+0x00000000 124518413  teitsmch   600        524288     2          dest         
+0x00000000 128385038  teitsmch   600        524288     2          dest         
+0x00000000 127467535  teitsmch   700        3017196    2          dest         
+0x00000000 125370384  teitsmch   600        524288     2          dest         
+0x00000000 128417809  teitsmch   600        524288     2          dest         
+0x00000000 128450578  teitsmch   600        393216     2          dest         
+0x00000000 140738580  teitsmch   700        136300     2          dest         
+
+------ Semaphore Arrays --------
+key        semid      owner      perms      nsems     
+
+[eos16:~/CIS452/Labs/Lab5]$ exit
+
+Script done on Thu 29 Sep 2016 02:10:31 PM EDT
