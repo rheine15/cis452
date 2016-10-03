@@ -17,12 +17,12 @@ int id = 'C';
 
 //globals for shm id and pointer
 int shmId;
-char *shmPtr;
+struct readwrite* shared_mem;
 
 //struct containing flags and data
 struct readwrite{
-  u_int8_t read:1;		//reader1 sets to '1' when completed reading
-  u_int8_t read2:1;		//reader2 sets to '1' when completed reading
+  int read;		//reader1 sets to '1' when completed reading
+  int read2;		//reader2 sets to '1' when completed reading
   char data [BUFSIZE];
 };
 
@@ -38,8 +38,7 @@ int main(int argc, char *argv[])
       exit(0);
   }
   
-  //struct for shared mem and shared mem stats
-  struct readwrite shared_mem;
+  //struct for shared mem stats
   struct shmid_ds shared_mem_stats;
   //obtain passkey for shared memory
   key_t passkey;
@@ -49,11 +48,11 @@ int main(int argc, char *argv[])
   signal(SIGINT, exitHandler);
   
   //setup shared memory space
-  if ((shmId = shmget(passkey, sizeof(shared_mem), S_IRUSR|S_IWUSR)) < 0) {
+  if ((shmId = shmget(passkey, sizeof(struct readwrite), S_IRUSR|S_IWUSR)) < 0) {
     perror("Please start writer before reader\n");
     exit(1);
   }
-  if ((shmPtr = shmat (shmId, 0, 0)) == (void*) -1) { //attach
+  if ((shared_mem = shmat (shmId, 0, 0)) == (void*) -1) { //attach
     perror("can't attach\n");
     exit(1);
   }  
@@ -64,19 +63,16 @@ int main(int argc, char *argv[])
   
   printf("shmId: %d\n", shmId);
   printf("Shared memory size: %zd bytes\n", shared_mem_stats.shm_segsz);
+  printf("I am reader %d\n", *argv[1]-'1'+1);
    
-  char read_data [BUFSIZE];
   //stay alive to continuously read data
   while(1){  
-      if(*argv[1] == '1' && shared_mem.read){
-	strcpy(read_data, shmPtr+1);
-	printf("Read from shared memory: %s\n",read_data);
-	shared_mem.read = 0;
-      } else if (*argv[1] == '2' && shared_mem.read2){
-	//copy into shared memory
-	strcpy(read_data, shmPtr+1);
-	printf("Read from shared memory: %s\n",read_data);
-	shared_mem.read2 = 0;
+      if(*argv[1] == '1' && shared_mem->read){
+	printf("Read from shared memory: %s\n",shared_mem->data);
+	shared_mem->read = 0;
+      } else if (*argv[1] == '2' && shared_mem->read2){
+	printf("Read from shared memory: %s\n",shared_mem->data);
+	shared_mem->read2 = 0;
       }
   }
   
@@ -88,7 +84,7 @@ void exitHandler (int sigNum)
   printf(" received.\n"); 
   
   //detach from shared memory
-  if(shmdt (shmPtr) < 0){
+  if(shmdt (shared_mem) < 0){
     perror("just can't let go\n");
     exit (1);
   }
