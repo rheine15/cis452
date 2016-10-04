@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 struct record* sort(char* fileName, int* length){
   char line[MAX];
   char* token;
-  struct record* temp;
+  struct record temp;
   int count = 0;
   struct record *records;
   
@@ -226,7 +226,6 @@ struct record* sort(char* fileName, int* length){
   while(fgets(line, MAX, file) != NULL) {
     printf("file is open 2\n");
     records = realloc(records, sizeof(struct record*) * count);
-    temp = malloc(sizeof(struct record));
     
     token = strtok(line," ");
     temp->transactionNum = atoi(token);
@@ -243,7 +242,7 @@ struct record* sort(char* fileName, int* length){
     
     printf("file is open 5\n");
     
-    memcpy(&records[count],temp,sizeof(*temp));
+    records[count] = temp,sizeof(*temp));
     printf("file is open 6\n");
     count++;
     printf("Added new record to struct\n");
