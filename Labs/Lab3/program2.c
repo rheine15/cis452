@@ -26,7 +26,7 @@ int main()
     }
 // point B
 
-   else if (!pid) {
+   else if (!pid) {	//I am child
         dup2 (fd[WRITE], STDOUT_FILENO);
 // point C
         close (fd[READ]);
@@ -37,7 +37,7 @@ int main()
         exit (0);
     }
 
-    dup2 (fd[READ], STDIN_FILENO);
+    dup2 (fd[READ], STDIN_FILENO); //I am parent
 // point C
     close (fd[READ]);
     close (fd[WRITE]);

@@ -10,9 +10,7 @@ int main()
 {
   pid_t pid;
   
-  //Register our two user signals to the sigHandler
-  signal(SIGUSR1, sigHandler);
-  signal(SIGUSR2, sigHandler);
+  
   
   pid = fork();
   
@@ -22,6 +20,9 @@ int main()
   } else if(pid > 0){ //I am the parent  
     //Register the ^C to the sigHandler for exitting
     signal(SIGINT, sigHandler);
+    //Register our two user signals to the sigHandler
+    signal(SIGUSR1, sigHandler);
+    signal(SIGUSR2, sigHandler);
     
     printf("spawned child PID# %d\n",pid);
     
@@ -40,7 +41,7 @@ int main()
       
       sleep(rTime);
       if(rSig){
-	if (kill(getpid(),SIGUSR1) < 0){
+	if (kill(getppid(),SIGUSR1) < 0){
 	  perror("kill failed");
 	  exit(1);
 	}
