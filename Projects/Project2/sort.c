@@ -20,8 +20,9 @@ struct record{
 void sendNextSig (int);
 void readReadySig1 (int);
 void readReadySig2 (int);
-struct record* sort(char*,int*);
+struct record* load(char*,int*);
 void printStructArray (struct record*,int);
+int cmpCustomerNum(const void*, const void*);
 
 //global variables for sigHandler
 int sendNext = 1;
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
   int fd1[2], fd2[2];
   ssize_t num1, num2; 
   
-  //TODO: stay alive to fork multiple times
+  //TODO: stay alive to fork multiple times depending on number of files
   //while(1){
   
   //set up the two pipes
@@ -60,11 +61,9 @@ int main(int argc, char* argv[])
       perror("fork failed");
       exit(1);
     } else if(pid2 > 0){ //I am the parent (merger)
-      printf("I am the merger: %ld\n",(long)getpid());
+      printf("I am the merger %ld\n",(long)getpid());
       //register signal handler. Will be sent from child to let know have loaded another input.
       signal(SIGUSR1, readReadySig1);
-      printf("Registered %ld on: %d\n",(long)pid1,SIGUSR1);
-      printf("Registered %ld on: %d\n",(long)pid2,SIGUSR2);
       signal(SIGUSR2, readReadySig2);
       
       //close unneccesary file descriptors
@@ -73,9 +72,8 @@ int main(int argc, char* argv[])
       
       //keep track of which pipe to read from
       int lastRead = 0;
-      char str1[MAX],str2[MAX],copy1[MAX],copy2[MAX];
-      char *tempTok1, *tempTok2;
-      int custNum1, custNum2;
+      struct record temp1;
+      struct record temp2;
       
       //stay alive
       while(1) {
@@ -83,30 +81,19 @@ int main(int argc, char* argv[])
 	  //printf("Beginning read\n");
 	  //read a single record from the pipe
 	  if(lastRead != 2){
-	    num1 = read(fd1[READ], (void *) str1, (size_t)  sizeof (str1));
+	    num1 = read(fd1[READ],(void *)&temp1, (size_t)sizeof(struct record));
 	  }
 	  if(lastRead != 1){
-	    num2 = read(fd2[READ], (void *) str2, (size_t)  sizeof (str2));
+	    num2 = read(fd2[READ],(void *)&temp2, (size_t)sizeof(struct record));
 	  }
 	  //check if there was an error
 	  if (num1 > MAX || num2 > MAX) {
 	    perror ("pipe read error\n");
 	    exit(1);
 	  }
-	  //copy strings because strtok destroys input
-	  strcpy(copy1,str1);
-	  strcpy(copy2,str2);
-	  //get to 2nd string
-	  tempTok1 = strtok(copy1," ");
-	  tempTok1 = strtok(NULL," ");
-	  tempTok2 = strtok(copy2," ");
-	  tempTok2 = strtok(NULL," ");	  
-	  //convert to integers
-	  custNum1 = atoi(tempTok1);
-	  custNum2 = atoi(tempTok2);
 	  
-	  if(custNum1 < custNum2){
-	    printf(str1);
+	  if(temp1.customerNum < temp2.customerNum){
+	    printf("%d\t%d\t%lf\n",temp1.transactionNum,temp1.customerNum,temp1.amount);
 	    readReady1 = 0;
 	    lastRead = 1;
 	    //printf("ready 1 off\n");
@@ -117,7 +104,7 @@ int main(int argc, char* argv[])
 	    }
 	    //printf("Requesting from child %ld\n", (long)pid1);  
 	  } else {
-	    printf(str2);
+	    printf("%d\t%d\t%lf\n",temp2.transactionNum,temp2.customerNum,temp2.amount);
 	    readReady2 = 0;
 	    lastRead = 2;
 	    //printf("ready 2 off\n");
@@ -130,16 +117,20 @@ int main(int argc, char* argv[])
 	  }
 	  //TODO: exit when done sorting
 	} //end of read
-      }
+      } //end of while
     } else if(pid2 == 0){ //I am child 2
       printf("I am child %ld, Parent is %ld\n", (long)getpid(), (long)getppid());
       
-      //TODO: make this different depending on which child
+      //TODO: make filename different depending on which child
       //sort the file
       int length;
       struct record *records;
-      records = sort("file_2.dat", &length);
-      printStructArray(records,length);
+      printf("Child 2 loading structs from file\n");
+      records = load("file_2.dat", &length);
+      printf("Child 2 sorting structs\n");
+      qsort(records, length, sizeof(struct record), cmpCustomerNum);
+      printf("Child 2 done sorting file\n");
+      //printStructArray(records,length);
       
       //register signal handler. Will be used by parent to request another record.
       signal(SIGUSR1, sendNextSig);
@@ -152,7 +143,6 @@ int main(int argc, char* argv[])
       //stay alive until EOF
       while(1){
 	if(sendNext){
-	  //perror("beggining write");
 	  //write up to parent
 	  write(STDOUT_FILENO, &records[count], sizeof(struct record));
 	  //send signal to parent
@@ -160,23 +150,31 @@ int main(int argc, char* argv[])
 	    perror("kill failed");
 	    exit(1);
 	  }
-	  //perror("Signal sent to parent");
+	  count++;
+	  if(count >= length){
+	    break;
+	  }
 	  //set own signal to not ready
 	  sendNext = 0;
 	}
       }
+      //free memory from records and exit
+      free(records);
+      exit(0);
     }
   } else if(pid1 == 0) { //I am child 1
     printf("I am child %ld, Parent is %ld\n", (long)getpid(), (long)getppid());
     
-    //open up the file. TODO: make this different depending on which child
+    //TODO: make filename different depending on which child
     //sort the file
     int length;
     struct record *records;
-    printf("Child 1 sorting file\n");
-    records = sort("file_1.dat", &length);
+    printf("Child 1 loading structs from file\n");
+    records = load("file_1.dat", &length);
+    printf("Child 1 sorting structs\n");
+    qsort(records, length, sizeof(struct record), cmpCustomerNum);
     printf("Child 1 done sorting file\n");
-    printStructArray(records,length);
+    //printStructArray(records,length);
     
     //register signal handler. Will be used by parent to request another record.
     signal(SIGUSR1, sendNextSig);
@@ -189,7 +187,6 @@ int main(int argc, char* argv[])
     //stay alive until EOF
     while(1){
       if(sendNext){
-	//perror("beggining write");
 	//write up to parent
 	write(STDOUT_FILENO, &records[count], sizeof(struct record));
 	//send signal to parent
@@ -197,11 +194,17 @@ int main(int argc, char* argv[])
 	  perror("kill failed");
 	  exit(1);
 	}
-	//perror("Signal sent to parent");
+	count++;
+	if(count >= length){
+	  break;
+	}
 	//set own signal to not ready
 	sendNext = 0;
       }
     }
+    //free memory from records and exit
+    free(records);
+    exit(0);
   }
   
   //}
@@ -209,55 +212,58 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-struct record* sort(char* fileName, int* length){
+struct record* load(char* fileName, int* length){
   char line[MAX];
   char* token;
-  struct record temp;
   int count = 0;
   struct record *records;
+  struct record temp;
   
-  records = malloc(sizeof(struct record));
+  records = (struct record *)malloc(sizeof(struct record) * (count+1));
   
   FILE* file;
   file = fopen(fileName, "r");
   
-  printf("file is open\n");
-  
   while(fgets(line, MAX, file) != NULL) {
-    printf("file is open 2\n");
-    records = realloc(records, sizeof(struct record*) * count);
+    //add an element to the array
+    records = (struct record *)realloc(records, sizeof(struct record) * (count+1));
     
     token = strtok(line," ");
-    temp->transactionNum = atoi(token);
-    
-    printf("file is open %d\n",temp->transactionNum);
+    temp.transactionNum = atoi(token);
     
     token = strtok(NULL," ");
-    temp->customerNum = atoi(token);
-    
-    printf("file is open \n");
+    temp.customerNum = atoi(token);
     
     token = strtok(NULL," ");
-    temp->amount = atof(token);
+    temp.amount = atof(token);
     
-    printf("file is open 5\n");
+    //copy temp to the array
+    memcpy(&records[count],&temp,sizeof(struct record));
     
-    records[count] = temp,sizeof(*temp));
-    printf("file is open 6\n");
     count++;
-    printf("Added new record to struct\n");
   }
   fclose(file);
   *length = count;
   return records;
 }
 
-void printStructArray(struct record* records, int length){
+void printStructArray(struct record *records, int length){
+  printf("Struct Array (Length %d):\n",length);
   int i;
   for(i=0;i<length;i++){
-    printf("%d %d %lf\n",records[i].transactionNum,records[i].customerNum,records[i].amount);
+    printf("%d\t%d\t%lf\n",records[i].transactionNum,records[i].customerNum,records[i].amount);
   }
 }
+
+int cmpCustomerNum(const void *a, const void *b) 
+{ 
+  //cast pointer type
+  struct record *ia = (struct record *)a;
+  struct record *ib = (struct record *)b;
+  
+  return ia->customerNum - ib->customerNum;
+  
+} 
 
 void sendNextSig (int sigNum)
 {
