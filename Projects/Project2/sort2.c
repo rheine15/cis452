@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 {
   pid_t pid1, pid2;
   int fd_up[2],fd_left[2],fd_right[2];
-  char fileNames [8][15] = {"file_1.dat\0","file_2.dat\0","file_3.dat\0","file_4.dat\0"};
+  char fileNames [8][15] = {"file_1.dat\0","file_2.dat\0","file_3.dat\0","file_4.dat\0","file_1.dat\0","file_2.dat\0","file_3.dat\0","file_4.dat\0"};
   
   //Receive number of file from user. Command line or runtime
   int numFiles = -1;
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     //stay alive to continue reading
     while(1) { //TODO: rethink this logic?
       if(readReady == 2 && sendNext){
-	printf("%d: beginning reads\n",getpid());
+	//printf("%d: beginning reads\n",getpid());
 	if(lastRead != 1){
 	  //printf("%d: reading left\n",getpid());
 	  num1 = read(fd_left[READ],(void *)&temp1, (size_t)sizeof(struct record));     
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
       if(sendNext){
 	//write up to parent
 	write(fd_up[WRITE], &records[count], sizeof(struct record));
-	printf("%d: Sent customerNum %d to %d\n",(int)getpid(),records[count].customerNum,(int)getppid());
+	//printf("%d: Sent customerNum %d to %d\n",(int)getpid(),records[count].customerNum,(int)getppid());
 	//send signal to parent
 	if (kill(getppid(),SIGUSR2) < 0){
 	  perror("kill failed");
@@ -287,7 +287,7 @@ void printStructArray(struct record *records, int length){
 void sendNextSig(int sigNum)
 {
   sendNext = 1;
-  printf("%d: signal received from %d\n",(int)getpid(),(int)getppid());
+  //printf("%d: signal received from %d\n",(int)getpid(),(int)getppid());
 }
 void readReadySig (int sigNum)
 {
