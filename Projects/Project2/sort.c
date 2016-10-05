@@ -263,7 +263,7 @@ int cmpCustomerNum(const void *a, const void *b)
   
   return ia->customerNum - ib->customerNum;
   
-} 
+}
 
 void sendNextSig (int sigNum)
 {
